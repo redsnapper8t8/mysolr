@@ -514,11 +514,10 @@ class SolrConnection:
         self.__add(lst, fields)
         lst.append(u'</add>')
         xstr = ''.join(lst)
-        if not _commit:
-            return self._update(xstr)
-        else:
-            self._update(xstr)
-            return self.commit()
+        query = None
+        if _commit:
+            query = {'commit': 'true'}
+        return self._update(xstr, query)
 
     def add_many(self, docs, _commit=False):
         """
@@ -532,11 +531,10 @@ class SolrConnection:
             self.__add(lst, doc)
         lst.append(u'</add>')
         xstr = ''.join(lst)
-        if not _commit:
-            return self._update(xstr)
-        else:
-            self._update(xstr)
-            return self.commit()
+        query = None
+        if _commit:
+            query = {'commit': 'true'}
+        return self._update(xstr, query)
 
     def commit(self, wait_flush=True, wait_searcher=True, _optimize=False):
         """
@@ -588,11 +586,10 @@ class SolrConnection:
 
         return data
 
-    def _update(self, request):
-
+    def _update(self, request, query=None):
+        selector = '%s/update%s' % (self.path, qs_from_items(query))
         try:
-            rsp = self._post(self.path + '/update',
-                              request, self.xmlheaders)
+            rsp = self._post(selector, request, self.xmlheaders)
             data = rsp.read()
         finally:
             if not self.persistent:
@@ -990,3 +987,18 @@ def utc_from_string(value):
             minute, second, microsecond, utc)
     except ValueError:
         raise ValueError ("'%s' is not a valid ISO 8601 SOLR date" % value)
+
+def qs_from_items(query):
+    # This deals with lists of values since multiple filter queries can
+    # be used for a single request.
+    qs = ''
+    if query:
+        sep = '?'
+        for k, v in query.items():
+            k = urllib.quote(k)
+            if isinstance(v, basestring):
+                v = [v]
+            for s in v:
+                qs += "%s%s=%s" % (sep, k, urllib.quote_plus(s))
+                sep = '&'
+    return qs
