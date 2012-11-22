@@ -13,6 +13,7 @@
             </analyzer>
         </fieldType>
         <fieldType name="sint" class="solr.SortableIntField" sortMissingLast="true" omitNorms="true" />
+        <fieldType name="long" class="solr.TrieLongField" precisionStep="0" positionIncrementGap="0"/>
     </types>
     <fields>
         <field name="id" type="string" indexed="true" stored="true" required="true" />
@@ -20,11 +21,12 @@
         <field name="data" type="text" indexed="true" stored="true" required="true" />
         <field name="num" type="sint" indexed="true" stored="true" required="false" />
         <field name="letters" type="string" indexed="true" stored="true"
-            required="false" multiValued="true" />
+               required="false" multiValued="true" />
+        <field name="_version_" type="long" indexed="true" stored="true"/>
         <field name="creation_time" type="date" indexed="true" stored="true"
-            required="false" />
+               required="false" />
         <field name="multi_time" type="date" indexed="true" stored="true"
-            required="false" multiValued="true" />
+               required="false" multiValued="true" />
     </fields>
     <uniqueKey>id</uniqueKey>
     <defaultSearchField>data</defaultSearchField>
