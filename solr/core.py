@@ -26,7 +26,7 @@ Features
  * Uses persistent HTTP connections by default
  * Properly converts to/from Solr data types, including datetime objects
  * Supports both querying and update commands (add, delete)
- * Requires Python 2.3+
+ * Requires Python 2.6+
 
 
 Connections
@@ -46,8 +46,6 @@ Only `url` is required,.
         Defaults to true.
 
     timeout -- Timeout, in seconds, for the server to response.
-        By default, use the python default timeout (of none?)
-        NOTE: This changes the python-wide timeout.
 
     ssl_key, ssl_cert -- If using client-side key files for
         SSL authentication,  these should be, respectively,
@@ -389,7 +387,7 @@ class Solr:
 
         kwargs = {}
 
-        if self.timeout and _python_version >= 2.6 and _python_version < 3:
+        if self.timeout and _python_version < 3:
             kwargs['timeout'] = self.timeout
 
         if self.scheme == 'https':
@@ -403,14 +401,6 @@ class Solr:
 
         # Responses from Solr will always be in UTF-8
         self.decoder = codecs.getdecoder('utf-8')
-
-        # Set timeout, if applicable.
-        if self.timeout and _python_version < 2.6:
-            self.conn.connect()
-            if self.scheme == 'http':
-                self.conn.sock.settimeout(self.timeout)
-            elif self.scheme == 'https':
-                self.conn.sock.sock.settimeout(self.timeout)
 
         self.xmlheaders = {'Content-Type': 'text/xml; charset=utf-8'}
         self.xmlheaders.update(post_headers)
@@ -629,6 +619,25 @@ class Solr:
             elif self.scheme == 'https':
                 self.conn.sock.sock.settimeout(self.timeout)
 
+    def _get(self, url, body, headers):
+        _headers = self.auth_headers.copy()
+        _headers.update(headers)
+        attempts = self.max_retries + 1
+        while attempts > 0:
+            try:
+                self.conn.request('GET', url + "?" + body.encode('UTF-8'), headers=_headers)
+                return check_response_status(self.conn.getresponse())
+            except (socket.error,
+                    httplib.ImproperConnectionState,
+                    httplib.BadStatusLine):
+            # We include BadStatusLine as they are spurious
+            # and may randomly happen on an otherwise fine
+            # Solr connection (though not often)
+                self._reconnect()
+                attempts -= 1
+                if attempts <= 0:
+                    raise
+
     def _post(self, url, body, headers):
         _headers = self.auth_headers.copy()
         _headers.update(headers)
@@ -820,7 +829,7 @@ class SearchHandler(object):
             logging.info("solrpy request: %s" % request)
 
         try:
-            rsp = conn._post(self.selector, request, conn.form_headers)
+            rsp = conn._get(self.selector, request, conn.form_headers)
             data = rsp.read()
             if conn.debug:
                 logging.info("solrpy got response: %s" % data)
