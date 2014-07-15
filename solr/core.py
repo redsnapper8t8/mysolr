@@ -251,7 +251,7 @@ from xml.sax.handler import ContentHandler
 from xml.sax.saxutils import escape, quoteattr
 from xml.dom.minidom import parseString
 
-__version__ = "0.9.5"
+__version__ = "1.0.0a1"
 
 __all__ = ['SolrException', 'Solr', 'SolrConnection',
            'Response', 'SearchHandler']
@@ -630,9 +630,9 @@ class Solr:
             except (socket.error,
                     httplib.ImproperConnectionState,
                     httplib.BadStatusLine):
-            # We include BadStatusLine as they are spurious
-            # and may randomly happen on an otherwise fine
-            # Solr connection (though not often)
+                    # We include BadStatusLine as they are spurious
+                    # and may randomly happen on an otherwise fine
+                    # Solr connection (though not often)
                 self._reconnect()
                 attempts -= 1
                 if attempts <= 0:
@@ -759,6 +759,11 @@ class SearchHandler(object):
         """
         # Optional parameters with '_' instead of '.' will be converted
         # later by raw_query().
+
+        def __getstate__(self):
+            odict = self.__dict__.copy() # copy the dict since we change it
+            del odict['_query']              # remove connection entry
+            return odict
 
         if highlight:
             params['hl'] = 'true'
