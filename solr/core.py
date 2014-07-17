@@ -251,7 +251,7 @@ from xml.sax.handler import ContentHandler
 from xml.sax.saxutils import escape, quoteattr
 from xml.dom.minidom import parseString
 
-__version__ = "1.0.0a1"
+__version__ = "1.0.0a2"
 
 __all__ = ['SolrException', 'Solr', 'SolrConnection',
            'Response', 'SearchHandler']
@@ -765,6 +765,7 @@ class SearchHandler(object):
             del odict['_query']              # remove connection entry
             return odict
 
+
         if highlight:
             params['hl'] = 'true'
             if not isinstance(highlight, (bool, int, float)):
@@ -782,9 +783,11 @@ class SearchHandler(object):
         if q is not None:
             params['q'] = q
 
+
         if fields:
             if not isinstance(fields, basestring):
                 fields = ",".join(fields)
+                params['fl'] = fields
         if not fields:
             fields = '*'
 
@@ -805,7 +808,7 @@ class SearchHandler(object):
         if score and not 'score' in fields.replace(',',' ').split():
             fields += ',score'
 
-        params['fl'] = fields
+
         params['version'] = self.conn.response_version
         params['wt'] = 'standard'
 
@@ -831,6 +834,7 @@ class SearchHandler(object):
         request = urllib.urlencode(query, doseq=True)
         conn = self.conn
         if conn.debug:
+            print("solrpy request: %s" % request)
             logging.info("solrpy request: %s" % request)
 
         try:
