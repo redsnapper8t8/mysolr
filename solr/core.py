@@ -261,6 +261,8 @@ _python_version = sys.version_info[0]+(sys.version_info[1]/10.0)
 # ===================================================================
 # Exceptions
 # ===================================================================
+
+
 class SolrException(Exception):
     """An exception thrown by solr connections.
 
@@ -765,7 +767,6 @@ class SearchHandler(object):
             del odict['_query']              # remove connection entry
             return odict
 
-
         if highlight:
             params['hl'] = 'true'
             if not isinstance(highlight, (bool, int, float)):
@@ -782,7 +783,6 @@ class SearchHandler(object):
 
         if q is not None:
             params['q'] = q
-
 
         if fields:
             if not isinstance(fields, basestring):
@@ -807,7 +807,6 @@ class SearchHandler(object):
 
         if score and not 'score' in fields.replace(',',' ').split():
             fields += ',score'
-
 
         params['version'] = self.conn.response_version
         params['wt'] = 'standard'
@@ -1136,6 +1135,7 @@ class UTC(datetime.tzinfo):
 
 utc = UTC()
 
+
 def utc_to_string(value):
     """
     Convert datetimes to the subset of ISO 8601 that Solr expects.
@@ -1145,6 +1145,7 @@ def utc_to_string(value):
         value = value.split('+')[0]
     value += 'Z'
     return value
+
 
 def utc_from_string(value):
     """
@@ -1166,6 +1167,7 @@ def utc_from_string(value):
             minute, second, microsecond, utc)
     except ValueError:
         raise ValueError ("'%s' is not a valid ISO 8601 Solr date" % value)
+
 
 def qs_from_items(query):
     # This deals with lists of values since multiple filter queries can
